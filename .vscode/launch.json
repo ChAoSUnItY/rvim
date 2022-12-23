@@ -1,0 +1,49 @@
+{
+    // 使用 IntelliSense 以得知可用的屬性。
+    // 暫留以檢視現有屬性的描述。
+    // 如需詳細資訊，請瀏覽: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'rvim'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=rvim",
+                    "--package=rvim"
+                ],
+                "filter": {
+                    "name": "rvim",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "/home/chaos-unity/桌面/projects/rvim/polish.txt"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'rvim'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=rvim",
+                    "--package=rvim"
+                ],
+                "filter": {
+                    "name": "rvim",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "/home/chaos-unity/桌面/projects/rvim/polish.txt"
+            ],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
