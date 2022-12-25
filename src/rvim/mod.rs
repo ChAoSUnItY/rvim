@@ -105,14 +105,6 @@ impl Editor {
         let mut quit = false;
         let mut insert = false;
 
-        defer(|| {
-            if term_booted {
-                println!("\033[2J");
-                termios.c_lflag |= ECHO;
-                tcsetattr(0, 0, &termios); // Ignored
-            }
-        });
-
         if let Err(err) = tcgetattr(0, &mut termios) {
             println!("ERROR: Could not get status of terminal");
             return Err(err);
@@ -147,10 +139,49 @@ impl Editor {
                 match char as char {
                     'q' => quit = true,
                     'e' => insert = true,
-                    
+                    's' => {
+                        let line = self.current_line();
+                        let column = self.cursor - self.lines[line].begin;
+
+                        if line < self.lines.len() - 1 {
+                            self.cursor = self.lines[line + 1].begin + column;
+
+                            if self.cursor > self.lines[line + 1].end {
+                                self.cursor = self.lines[line + 1].end;
+                            }
+                        }
+                    }
+                    'w' => {
+                        let line = self.current_line();
+                        let column = self.cursor - self.lines[line].begin;
+
+                        if line > 0 {
+                            self.cursor = self.lines[line + 1].begin + column;
+
+                            if self.cursor > self.lines[line + 1].end {
+                                self.cursor = self.lines[line + 1].end;
+                            }
+                        }
+                    }
+                    'a' => {
+                        if self.cursor > 0 {
+                            self.cursor -= 1;
+                        }
+                    }
+                    'd' => {
+                        if self.cursor < self.data.len() {
+                            self.cursor += 1;
+                        }
+                    }
                     _ => {}
                 }
             }
+        }
+
+        if term_booted {
+            print!("\033[2J");
+            termios.c_lflag |= ECHO;
+            tcsetattr(0, 0, &termios)?;
         }
 
         Ok(())
