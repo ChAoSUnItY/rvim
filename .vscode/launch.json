@@ -19,6 +19,7 @@
                     "kind": "bin"
                 }
             },
+            "terminal": "external",
             "args": [
                 "/home/chaos-unity/桌面/projects/rvim/polish.txt"
             ],
@@ -40,6 +41,7 @@
                     "kind": "bin"
                 }
             },
+            "terminal": "external",
             "args": [
                 "/home/chaos-unity/桌面/projects/rvim/polish.txt"
             ],
