@@ -1,27 +1,33 @@
-use std::{sync::Mutex, io::{Error, BufWriter, Write}, fs::File};
+use std::{
+    fs::File,
+    io::{BufWriter, Error, Write},
+    sync::Mutex,
+};
 
-use crossterm::{terminal::enable_raw_mode, event::{read, Event, KeyEvent, KeyCode, KeyModifiers}};
+use crossterm::{
+    event::{read, Event, KeyCode, KeyEvent, KeyModifiers},
+    terminal::enable_raw_mode,
+};
 use once_cell::sync::Lazy;
-use termios::{Termios, tcgetattr, tcsetattr, ECHO, ICANON};
+use termios::{tcgetattr, tcsetattr, Termios, ECHO, ICANON};
 
-pub static EDITOR: Lazy<Mutex<Editor>> = Lazy::new(|| Mutex::new(Editor{
-    data: vec![],
-    lines: vec![],
-    cursor: 0
-}));
+pub static EDITOR: Lazy<Mutex<Editor>> = Lazy::new(|| {
+    Mutex::new(Editor {
+        data: vec![],
+        lines: vec![],
+        cursor: 0,
+    })
+});
 
 #[derive(Debug)]
 pub struct Line {
     begin: usize,
-    end: usize
+    end: usize,
 }
 
 impl Line {
     pub fn new(begin: usize, end: usize) -> Self {
-        Self{
-            begin,
-            end
-        }
+        Self { begin, end }
     }
 }
 
@@ -29,7 +35,7 @@ impl Line {
 pub struct Editor {
     data: Vec<char>,
     lines: Vec<Line>,
-    cursor: usize
+    cursor: usize,
 }
 
 impl Editor {
@@ -39,14 +45,16 @@ impl Editor {
         self.cursor = 0;
     }
 
-    pub fn init<T>(&mut self, content: &T) where T: AsRef<str> {
+    pub fn init<T>(&mut self, content: &T)
+    where
+        T: AsRef<str>,
+    {
         self.reset();
-        
+
         for char in content.as_ref().chars() {
             self.data.push(char);
         }
     }
-
 
     fn recompute_size(&mut self) {
         let mut begin = 0;
@@ -94,7 +102,11 @@ impl Editor {
         }
 
         let line = self.current_line();
-        print!("\x1B[{};{}H", line + 1, self.cursor - self.lines[line].begin + 1);
+        print!(
+            "\x1B[{};{}H",
+            line + 1,
+            self.cursor - self.lines[line].begin + 1
+        );
     }
 
     fn save_to_file<'a>(&self, file_path: &'a str) -> Result<(), Error> {
@@ -112,7 +124,6 @@ impl Editor {
 
     pub fn start_interactive<'a>(&mut self, file_path: &'a str) -> Result<(), Error> {
         let mut termios = Termios::from_fd(0)?;
-        let mut term_booted = false;
         let mut quit = false;
         let mut insert = false;
 
@@ -131,8 +142,6 @@ impl Editor {
 
         enable_raw_mode()?;
 
-        term_booted = true;
-
         self.recompute_size();
 
         while !quit {
@@ -140,17 +149,17 @@ impl Editor {
 
             if insert {
                 match read()? {
-                    Event::Key(KeyEvent{
+                    Event::Key(KeyEvent {
                         code: KeyCode::Esc,
-                        modifiers: KeyModifiers::NONE, 
-                        kind: _, 
-                        state: _ 
+                        modifiers: KeyModifiers::NONE,
+                        kind: _,
+                        state: _,
                     }) => {
                         insert = false;
 
                         self.save_to_file(file_path)?;
                     }
-                    Event::Key(KeyEvent{
+                    Event::Key(KeyEvent {
                         code: KeyCode::Char(key_code),
                         modifiers: KeyModifiers::NONE,
                         kind: _,
@@ -162,62 +171,58 @@ impl Editor {
                 };
             } else {
                 match read()? {
-                    Event::Key(KeyEvent { 
-                        code: KeyCode::Char(code), 
-                        modifiers: _, 
-                        kind: _, 
-                        state: _
-                    }) => {
-                        match code {
-                            'q' => quit = true,
-                            'e' => insert = true,
-                            's' => {
-                                let line = self.current_line();
-                                let column = self.cursor - self.lines[line].begin;
-        
-                                if line < self.lines.len() - 1 {
-                                    self.cursor = self.lines[line + 1].begin + column;
-        
-                                    if self.cursor > self.lines[line + 1].end {
-                                        self.cursor = self.lines[line + 1].end;
-                                    }
+                    Event::Key(KeyEvent {
+                        code: KeyCode::Char(code),
+                        modifiers: _,
+                        kind: _,
+                        state: _,
+                    }) => match code {
+                        'q' => quit = true,
+                        'e' => insert = true,
+                        's' => {
+                            let line = self.current_line();
+                            let column = self.cursor - self.lines[line].begin;
+
+                            if line < self.lines.len() - 1 {
+                                self.cursor = self.lines[line + 1].begin + column;
+
+                                if self.cursor > self.lines[line + 1].end {
+                                    self.cursor = self.lines[line + 1].end;
                                 }
                             }
-                            'w' => {
-                                let line = self.current_line();
-                                let column = self.cursor - self.lines[line].begin;
-        
-                                if line > 0 {
-                                    self.cursor = self.lines[line + 1].begin + column;
-        
-                                    if self.cursor > self.lines[line + 1].end {
-                                        self.cursor = self.lines[line + 1].end;
-                                    }
-                                }
-                            }
-                            'a' => {
-                                if self.cursor > 0 {
-                                    self.cursor -= 1;
-                                }
-                            }
-                            'd' => {
-                                if self.cursor < self.data.len() {
-                                    self.cursor += 1;
-                                }
-                            }
-                            _ => {}
                         }
-                    }
+                        'w' => {
+                            let line = self.current_line();
+                            let column = self.cursor - self.lines[line].begin;
+
+                            if line > 0 {
+                                self.cursor = self.lines[line + 1].begin + column;
+
+                                if self.cursor > self.lines[line + 1].end {
+                                    self.cursor = self.lines[line + 1].end;
+                                }
+                            }
+                        }
+                        'a' => {
+                            if self.cursor > 0 {
+                                self.cursor -= 1;
+                            }
+                        }
+                        'd' => {
+                            if self.cursor < self.data.len() {
+                                self.cursor += 1;
+                            }
+                        }
+                        _ => {}
+                    },
                     _ => {}
                 }
             }
         }
 
-        if term_booted {
-            print!("\x1B[2J");
-            termios.c_lflag |= ECHO;
-            tcsetattr(0, 0, &termios)?;
-        }
+        print!("\x1B[2J");
+        termios.c_lflag |= ECHO;
+        tcsetattr(0, 0, &termios)?;
 
         Ok(())
     }
