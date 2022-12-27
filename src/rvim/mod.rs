@@ -79,9 +79,11 @@ impl Editor {
     }
 
     fn remove_char(&mut self) {
-        self.data.remove(self.cursor);
-        self.cursor -= 1;
-        self.recompute_size();
+        if self.cursor > 0 {
+            self.data.remove(self.cursor);
+            self.cursor -= 1;
+            self.recompute_size();
+        }
     }
 
     fn current_line(&self) -> usize {
@@ -166,6 +168,14 @@ impl Editor {
                         insert = false;
 
                         self.save_to_file(file_path)?;
+                    }
+                    Event::Key(KeyEvent {
+                        code: KeyCode::Backspace,
+                        modifiers: KeyModifiers::NONE,
+                        kind: _,
+                        state: _,
+                    }) => {
+                        self.remove_char();
                     }
                     Event::Key(KeyEvent {
                         code: KeyCode::Char(key_code),
