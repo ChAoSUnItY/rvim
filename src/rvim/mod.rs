@@ -16,6 +16,7 @@ pub static EDITOR: Lazy<Mutex<Editor>> = Lazy::new(|| {
         data: vec![],
         lines: vec![],
         cursor: 0,
+        view_row: 0,
     })
 });
 
@@ -36,6 +37,7 @@ pub struct Editor {
     data: Vec<char>,
     lines: Vec<Line>,
     cursor: usize,
+    view_row: usize,
 }
 
 impl Editor {
@@ -73,6 +75,12 @@ impl Editor {
     fn insert_char(&mut self, char: char) {
         self.data.insert(self.cursor, char);
         self.cursor += 1;
+        self.recompute_size();
+    }
+
+    fn remove_char(&mut self) {
+        self.data.remove(self.cursor);
+        self.cursor -= 1;
         self.recompute_size();
     }
 
