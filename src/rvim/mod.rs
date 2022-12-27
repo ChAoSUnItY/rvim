@@ -112,7 +112,7 @@ impl Editor {
         }
 
         let line = self.current_line();
-        stdout().execute(MoveTo((line) as u16, (self.cursor - self.lines[line].begin) as u16))?;
+        stdout().execute(MoveTo(line as u16, (self.cursor - self.lines[line].begin) as u16))?;
         Ok(())
     }
 
