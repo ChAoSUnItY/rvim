@@ -1,12 +1,12 @@
 use std::{
     fs::File,
-    io::{BufWriter, Error, Write},
+    io::{BufWriter, Error, Write, stdout},
     sync::Mutex,
 };
 
 use crossterm::{
     event::{read, Event, KeyCode, KeyEvent, KeyModifiers},
-    terminal::enable_raw_mode,
+    terminal::enable_raw_mode, ExecutableCommand, cursor::MoveTo,
 };
 use once_cell::sync::Lazy;
 use termios::{tcgetattr, tcsetattr, Termios, ECHO, ICANON};
@@ -98,7 +98,7 @@ impl Editor {
         0
     }
 
-    fn rerender(&self, insert: bool) {
+    fn rerender(&self, insert: bool) -> Result<(), Error> {
         print!("\x1B[2J\x1B[H");
 
         for char in &self.data {
@@ -112,11 +112,8 @@ impl Editor {
         }
 
         let line = self.current_line();
-        print!(
-            "\x1B[{};{}H",
-            line + 1,
-            self.cursor - self.lines[line].begin + 1
-        );
+        stdout().execute(MoveTo((line) as u16, (self.cursor - self.lines[line].begin) as u16))?;
+        Ok(())
     }
 
     fn save_to_file<'a>(&self, file_path: &'a str) -> Result<(), Error> {
@@ -155,7 +152,7 @@ impl Editor {
         self.recompute_size();
 
         while !quit {
-            self.rerender(insert);
+            self.rerender(insert)?;
 
             if insert {
                 match read()? {
