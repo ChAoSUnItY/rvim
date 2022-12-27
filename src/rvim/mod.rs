@@ -1,12 +1,14 @@
 use std::{
     fs::File,
-    io::{BufWriter, Error, Write, stdout},
+    io::{stdout, BufWriter, Error, Write},
     sync::Mutex,
 };
 
 use crossterm::{
+    cursor::MoveTo,
     event::{read, Event, KeyCode, KeyEvent, KeyModifiers},
-    terminal::{enable_raw_mode, Clear, ClearType}, ExecutableCommand, cursor::MoveTo,
+    terminal::{enable_raw_mode, Clear, ClearType},
+    ExecutableCommand,
 };
 use once_cell::sync::Lazy;
 use termios::{tcgetattr, tcsetattr, Termios, ECHO, ICANON};
@@ -112,7 +114,10 @@ impl Editor {
         }
 
         let line = self.current_line();
-        stdout().execute(MoveTo(line as u16, (self.cursor - self.lines[line].begin) as u16))?;
+        stdout().execute(MoveTo(
+            line as u16,
+            (self.cursor - self.lines[line].begin) as u16,
+        ))?;
         Ok(())
     }
 
