@@ -6,7 +6,7 @@ use std::{
 
 use crossterm::{
     event::{read, Event, KeyCode, KeyEvent, KeyModifiers},
-    terminal::enable_raw_mode, ExecutableCommand, cursor::MoveTo,
+    terminal::{enable_raw_mode, Clear, ClearType}, ExecutableCommand, cursor::MoveTo,
 };
 use once_cell::sync::Lazy;
 use termios::{tcgetattr, tcsetattr, Termios, ECHO, ICANON};
@@ -99,7 +99,7 @@ impl Editor {
     }
 
     fn rerender(&self, insert: bool) -> Result<(), Error> {
-        print!("\x1B[2J\x1B[H");
+        stdout().execute(Clear(ClearType::All))?;
 
         for char in &self.data {
             print!("{}", char);
