@@ -109,8 +109,6 @@ impl Editor {
         let (width, height) = size().map(|(w, h)| (w as usize, h as usize))?;
 
         for i in 0..height - 1 {
-            // stdout.execute(MoveTo((i + 1) as u16, 0))?;
-
             let row = self.view_row + i;
 
             if row < self.lines.len() {
