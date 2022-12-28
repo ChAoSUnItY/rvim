@@ -7,7 +7,7 @@ use std::{
 use crossterm::{
     cursor::MoveTo,
     event::{read, Event, KeyCode, KeyEvent, KeyModifiers},
-    terminal::{enable_raw_mode, Clear, ClearType},
+    terminal::{enable_raw_mode, size, Clear, ClearType},
     ExecutableCommand,
 };
 use once_cell::sync::Lazy;
@@ -101,23 +101,44 @@ impl Editor {
     }
 
     fn rerender(&self, insert: bool) -> Result<(), Error> {
-        stdout().execute(Clear(ClearType::All))?;
+        let mut stdout = stdout();
+        stdout
+            .execute(Clear(ClearType::All))?
+            .execute(MoveTo(0, 0))?;
 
-        for char in &self.data {
-            print!("{}", char);
-        }
+        let (width, height) = size().map(|(w, h)| (w as usize, h as usize))?;
 
-        println!();
+        for i in 0..height - 1 {
+            // stdout.execute(MoveTo((i + 1) as u16, 0))?;
 
-        if insert {
-            print!("[INSERT]");
+            let row = self.view_row + i;
+
+            if row < self.lines.len() {
+                let &Line { begin, end } = &self.lines[row];
+                let mut line_size = end - begin;
+
+                if line_size > width {
+                    line_size = width;
+                }
+
+                write!(
+                    &mut stdout,
+                    "{}\r\n",
+                    self.data[begin..begin + line_size]
+                        .iter()
+                        .collect::<String>()
+                )?;
+            } else {
+                write!(&mut stdout, "~\r\n")?;
+            }
         }
 
         let line = self.current_line();
-        stdout().execute(MoveTo(
-            line as u16,
+        stdout.execute(MoveTo(
             (self.cursor - self.lines[line].begin) as u16,
+            line as u16,
         ))?;
+
         Ok(())
     }
 
@@ -229,7 +250,7 @@ impl Editor {
                             }
                         }
                         'd' => {
-                            if self.cursor < self.data.len() {
+                            if self.cursor < self.data.len() - 1 {
                                 self.cursor += 1;
                             }
                         }
