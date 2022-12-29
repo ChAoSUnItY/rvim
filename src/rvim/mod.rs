@@ -103,7 +103,7 @@ impl Editor {
     fn rerender(&mut self, insert: bool) -> Result<(), Error> {
         let mut stdout = stdout();
         stdout
-            .execute(Clear(ClearType::All))?
+            .execute(Clear(ClearType::Purge))?
             .execute(MoveTo(0, 0))?;
 
         let (width, height) = size().map(|(w, h)| (w as usize, h as usize))?;
