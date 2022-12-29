@@ -103,8 +103,10 @@ impl Editor {
     fn rerender(&mut self, insert: bool) -> Result<(), Error> {
         let mut stdout = stdout();
         stdout
-            .execute(Clear(ClearType::Purge))?
+            .execute(Clear(ClearType::Purge))? 
             .execute(MoveTo(0, 0))?;
+
+        // TODO: We should store history first then recover it after rvim finished.
 
         let (width, height) = size().map(|(w, h)| (w as usize, h as usize))?;
         let cursor_column = self.current_line();
