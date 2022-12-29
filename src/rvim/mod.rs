@@ -100,13 +100,23 @@ impl Editor {
         0
     }
 
-    fn rerender(&self, insert: bool) -> Result<(), Error> {
+    fn rerender(&mut self, insert: bool) -> Result<(), Error> {
         let mut stdout = stdout();
         stdout
             .execute(Clear(ClearType::All))?
             .execute(MoveTo(0, 0))?;
 
         let (width, height) = size().map(|(w, h)| (w as usize, h as usize))?;
+        let cursor_column = self.current_line();
+        let mut cursor_row = self.cursor - self.lines[cursor_column].begin;
+
+        if cursor_column < self.view_row {
+            self.view_row = cursor_row;
+        }
+
+        if cursor_column >= self.view_row + height {
+            self.view_row = cursor_column - height + 1;
+        }
 
         for i in 0..height - 1 {
             let row = self.view_row + i;
@@ -131,10 +141,13 @@ impl Editor {
             }
         }
 
-        let line = self.current_line();
+        if cursor_row > width {
+            cursor_row = width
+        }
+
         stdout.execute(MoveTo(
-            (self.cursor - self.lines[line].begin) as u16,
-            line as u16,
+            (cursor_row) as u16,
+            (cursor_column - self.view_row) as u16,
         ))?;
 
         Ok(())
